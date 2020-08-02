@@ -169,25 +169,25 @@ class AircraftPerformance(QDialog):
 
     def Standard_Day(self):
         if self.altitude is not None:
-            self.Temp = 518.67-0.00356*self.altitude
-            self.Pressure = 2216*(self.Temp/518.67)**5.256
-            self.rho = self.Pressure/(1718*self.Temp)
+            self.Temp = self.i.T_SL-0.00356*self.altitude
+            self.Pressure = 2216*(self.Temp/self.i.T_SL)**5.256
+            self.rho = self.Pressure/(self.i.R_air*self.Temp)
         self.data_retrieval()
 
     def Hot_Day(self):
         if self.altitude is not None:
-            Temp = 518.67-0.00356*self.altitude
+            Temp = self.i.T_SL-0.00356*self.altitude
             self.Temp = Temp*self.i.theta_break
-            self.Pressure = 2216*(Temp/518.67)**5.256
-            self.rho = self.Pressure/(1718*self.Temp)
+            self.Pressure = 2216*(Temp/self.i.T_SL)**5.256
+            self.rho = self.Pressure/(self.i.R_air*self.Temp)
         self.data_retrieval()
 
     def Cold_Day(self):
         if self.altitude is not None:
-            Temp = 518.67-0.00356*self.altitude
+            Temp = self.i.T_SL-0.00356*self.altitude
             self.Temp = Temp/self.i.theta_break
-            self.Pressure = 2216*(Temp/518.67)**5.256
-            self.rho = self.Pressure/(1718*self.Temp)
+            self.Pressure = 2216*(Temp/self.i.T_SL)**5.256
+            self.rho = self.Pressure/(self.i.R_air*self.Temp)
         self.data_retrieval()
 
     def Tropic_Day(self):

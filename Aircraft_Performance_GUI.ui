@@ -54,7 +54,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>0.900</string>
+     <string>0.700</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -108,7 +108,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>220</string>
+     <string>150</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -274,7 +274,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>30</string>
+     <string>40</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -604,7 +604,7 @@
      <string notr="true">background-color: rgba(255, 191, 103, 53);</string>
     </property>
     <property name="text">
-     <string>0.0111</string>
+     <string>0.0120</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -655,7 +655,7 @@
      <string notr="true">background-color: rgba(255, 191, 103, 53);</string>
     </property>
     <property name="text">
-     <string>0.900</string>
+     <string>1.000</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -706,7 +706,7 @@
      <string notr="true">background-color: rgba(255, 191, 103, 53);</string>
     </property>
     <property name="text">
-     <string>300</string>
+     <string>50</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -757,7 +757,7 @@
      <string notr="true">background-color: rgba(255, 191, 103, 53);</string>
     </property>
     <property name="text">
-     <string>50</string>
+     <string>0</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -795,7 +795,7 @@
      <string notr="true">background-color: rgba(255, 191, 103, 53);</string>
     </property>
     <property name="text">
-     <string>250</string>
+     <string>400</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -1467,10 +1467,10 @@
      <number>2</number>
     </property>
     <property name="value">
-     <number>20</number>
+     <number>12</number>
     </property>
     <property name="sliderPosition">
-     <number>20</number>
+     <number>12</number>
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
@@ -1489,7 +1489,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>20.0</string>
+     <string>12.0</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>

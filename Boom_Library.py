@@ -69,3 +69,5 @@ class BoomLibrary:
         self.P_18k = 1057.5
         self.P_18k_HD = None
         self.P_18k_CD = None
+
+        self.cp = 1.4
