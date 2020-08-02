@@ -218,11 +218,11 @@ class AircraftPerformance(QDialog):
         self.q_sub = (1/2)*self.V_sub**2*self.rho
         self.q_ts = (1/2)*self.V_ts**2*self.rho
         self.q_ss = (1/2)*self.V_ss**2*self.rho
-        self.T_target_SL = self.T_avl_input*self.T_ratio
+        self.T_target_SL = (self.T_avl_input*self.T_ratio)*self.eta_mechanical
         self.T_target = self.T_target_SL*(self.rho/self.i.rho_SL)
         self.T_target_18 = self.T_target_SL*(self.i.rho_18_HD/self.i.rho_SL)
-        self.a = np.sqrt(1.4*self.i.R_air*self.Temp)
-        self.a_18 = np.sqrt(1.4*self.i.R_air*self.i.T_18_CD)
+        self.a = np.sqrt(self.i.cp*self.i.R_air*self.Temp)
+        self.a_18 = np.sqrt(self.i.cp*self.i.R_air*self.i.T_18_CD)
         self.q_a = (1/2)*self.a**2*self.rho
         self.aircraft_parameters()
 
