@@ -1,4 +1,5 @@
 # Aircraft Analysis Tool
+![app-image.png](docs/img/app.png)
 
 ## Dependencies
 Example setup:
