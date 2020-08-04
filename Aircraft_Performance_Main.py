@@ -94,11 +94,11 @@ class AircraftPerformance(QDialog):
         self.V_ts = np.linspace(850, 1175, 10**4)
         self.V_ss = np.linspace(1175, 1312, 10**4)
         self.V_stall = None
-        self.V_max_18k_ss = None
-        self.V_max_18k_ts = None
+        self.V_max_ss = None
+        self.V_max_ts = None
         self.V_TO = None
-        self.Mach_18k_ts = None
-        self.Mach_18k_ss = None
+        self.Mach_ts = None
+        self.Mach_ss = None
         self.q = None
         self.q_sub = None
         self.q_ts = None
@@ -150,6 +150,22 @@ class AircraftPerformance(QDialog):
         self.mod_altitude = None                           # Altitude for Initial Start-Up Calculations - [ ft ]
         self.delta_P = None
         self.delta_t = None
+        self.T_2_W = None
+        self.W_S = None
+        self.L_2_D_sub = None
+        self.L_2_D_ts = None
+        self.L_2_D_ss = None
+        self.L_2_D_sub_max = None
+        self.L_2_D_ts_max = None
+        self.L_2_D_ss_max = None
+        self.V_T_req_min = None
+        self.T_req_2_W_min = None
+        self.T_req_min = None
+        self.V_range = None
+        self.theta_ROC = None
+        self.V_ROC_max = None
+        self.ROC_max = None
+        self.Z = None
         self.P_SL = 101324.204
         self.P_18k = 50633.374
         self.h_18k = 5486.4
@@ -221,6 +237,8 @@ class AircraftPerformance(QDialog):
         self.T_target_SL = (self.T_avl_input*self.T_ratio)*self.eta_mechanical
         self.T_target = self.T_target_SL*(self.rho/self.i.rho_SL)
         self.T_target_18 = self.T_target_SL*(self.i.rho_18_HD/self.i.rho_SL)
+        self.T_2_W = self.T_target/self.W_max
+        self.W_S = self.W_max/self.S_wing
         self.a = np.sqrt(self.i.cp*self.i.R_air*self.Temp)
         self.a_18 = np.sqrt(self.i.cp*self.i.R_air*self.i.T_18_CD)
         self.q_a = (1/2)*self.a**2*self.rho
@@ -237,12 +255,12 @@ class AircraftPerformance(QDialog):
         self.K = 1/(np.pi*self.AR_wing*self.e)
         self.V_stall = np.sqrt((2/self.i.rho_SL_HD)*(self.W_max/self.S_wing)*(1/self.CL_max))
         self.V_TO = 1.25*self.V_stall
-        self.V_max_18k_ss = np.sqrt(((self.T_target_18/self.W_max) * (self.W_max/self.S_wing) + (self.W_max/self.S_wing) * np.sqrt((
-                self.T_target_18/self.W_max) ** 2 - 4 * self.CD_0_ss * self.K)) / (self.i.rho_18_HD * self.CD_0_ss))
-        self.V_max_18k_ts = np.sqrt(((self.T_target_18/self.W_max) * (self.W_max/self.S_wing) + (self.W_max/self.S_wing) * np.sqrt((
-                self.T_target_18/self.W_max) ** 2 - 4 * self.CD_0_ts * self.K)) / (self.i.rho_18_HD * self.CD_0_ts))
-        self.Mach_18k_ts = self.V_max_18k_ts / self.a_18
-        self.Mach_18k_ss = self.V_max_18k_ss / self.a_18
+        self.V_max_ss = np.sqrt(((self.T_target / self.W_max) * (self.W_max / self.S_wing) + (self.W_max / self.S_wing) * np.sqrt((
+                self.T_target/self.W_max) ** 2 - 4 * self.CD_0_ss * self.K)) / (self.rho*self.CD_0_ss))
+        self.V_max_ts = np.sqrt(((self.T_target / self.W_max) * (self.W_max / self.S_wing) + (self.W_max / self.S_wing) * np.sqrt((
+                self.T_target/self.W_max) ** 2 - 4 * self.CD_0_ts * self.K)) / (self.rho*self.CD_0_ts))
+        self.Mach_ts = self.V_max_ts / self.a_18
+        self.Mach_ss = self.V_max_ss / self.a_18
         self.thrust_required()
 
     def thrust_required(self):
@@ -251,9 +269,25 @@ class AircraftPerformance(QDialog):
         self.CL_ts = self.W_max / (self.q_ts*self.S_wing)
         self.CL_ss = self.W_max / (self.q_ss*self.S_wing)
         self.CD = self.CD_0+self.K*self.CL**2
-        self.CD_sub = self.CD_0_sub+self.K*self.CL**2
-        self.CD_ts = self.CD_0_ts
-        self.CD_ss = self.CD_0_ss
+        self.CD_sub = self.CD_0_sub+self.K*self.CL_sub**2
+        self.CD_ts = self.CD_0_ts+self.K*self.CL_ts**2
+        self.CD_ss = self.CD_0_ss+self.K*self.CL_ss**2
+        self.L_2_D_sub = self.CL_sub/self.CD_sub
+        self.L_2_D_ts = self.CL_ts/self.CD_ts
+        self.L_2_D_ss = self.CL_ss/self.CD_ss
+        self.L_2_D_sub_max = 1/(np.sqrt(4*self.CD_0_sub*self.K))
+        self.L_2_D_ts_max = 1/(np.sqrt(4*self.CD_0_ts*self.K))
+        self.L_2_D_ss_max = 1/(np.sqrt(4*self.CD_0_ss*self.K))
+        self.T_req_2_W_min = np.sqrt(4*self.CD_0_sub*self.K)
+        self.V_T_req_min = np.sqrt((2/self.rho)*np.sqrt(self.K/self.CD_0_sub)*self.W_S)*0.3048
+        self.V_range = 1.32*self.V_T_req_min
+        self.Z = (1+(np.sqrt(1+(3/((self.L_2_D_sub_max**2)*(self.T_2_W**2))))))
+        self.V_ROC_max = np.sqrt(((self.T_2_W*self.W_S)/(3*self.rho*self.CD_0_sub))*self.Z)*0.3048
+        # self.ROC_max = np.sqrt((self.W_S*self.Z)/(3*self.rho*self.CD_0_sub))*(self.T_2_W**(3/2))*(1-(self.Z/6)-(3/(2*(self.T_2_W**2)*(
+        #     self.L_2_D_sub_max**2)*self.Z)))
+        # self.theta_ROC = np.arcsin((self.T_2_W-np.sqrt(4*self.CD_0_sub*self.K))*(np.pi / 180))
+        # print(self.V_ROC_max)
+        self.T_req_min = (self.T_req_2_W_min*self.W_max)/0.225
         self.T_req = self.q*self.S_wing*self.CD
         self.T_req_sub = self.q_sub*self.S_wing*self.CD_sub
         self.T_req_ts = self.q_ts*self.S_wing*self.CD_ts
@@ -264,9 +298,9 @@ class AircraftPerformance(QDialog):
         self.CD_a = self.CD_0_ts + self.K*self.CL_a**2
         self.T_req_a = self.q_a * self.S_wing * self.CD_a
 
-        if self.Mach_18k_ss < 1.0:
-            self.V_max_18k_ss = 0
-            self.Mach_18k_ss = 0
+        if self.Mach_ss < 1.0:
+            self.V_max_ss = 0
+            self.Mach_ss = 0
             self.delta_P = 0
             self.delta_t = 0
             self.upload_values()
@@ -274,10 +308,10 @@ class AircraftPerformance(QDialog):
             self.sonic_boom()
 
     def sonic_boom(self):
-        self.delta_P = self.K_p*self.K_r*np.sqrt(self.P_18k*self.P_SL)*(self.Mach_18k_ss**2-1)**(1/8)*self.h_18k**(-3/4)*self.length**(
-                3/4)*self.K_s
-        self.delta_t = self.K_t*(3.42/(self.V_max_18k_ss*0.3048))*(self.Mach_18k_ss/((self.Mach_18k_ss**2-1)**(3/8)))*self.h_18k**(
-                1/4)*self.length**(3/4)*self.K_s
+        self.delta_P = self.K_p * self.K_r * np.sqrt(self.P_18k*self.P_SL) * (self.Mach_ss ** 2 - 1) ** (1 / 8) * self.h_18k ** (-3 / 4) * self.length ** (
+                3/4) * self.K_s
+        self.delta_t = self.K_t * (3.42 / (self.V_max_ss * 0.3048)) * (self.Mach_ss / ((self.Mach_ss ** 2 - 1) ** (3 / 8))) * self.h_18k ** (
+                1/4) * self.length ** (3/4) * self.K_s
 
         self.upload_values()
 
@@ -291,11 +325,11 @@ class AircraftPerformance(QDialog):
             self.ui.lineEdit_24.setText('{:.2f}'.format(self.T_TO_min))
             self.ui.lineEdit_25.setText('{:.2f}'.format(self.F_TO_min))
             self.ui.lineEdit_27.setText('{:.2f}'.format(self.delta_P))
-            self.ui.lineEdit_28.setText('{:.2f}'.format(self.Mach_18k_ts))
+            self.ui.lineEdit_28.setText('{:.2f}'.format(self.Mach_ts))
             self.ui.lineEdit_30.setText('{:.4f}'.format(self.delta_t))
-            self.ui.lineEdit_29.setText('{:.2f}'.format(self.V_max_18k_ts*0.3048))
-            self.ui.lineEdit_35.setText('{:.2f}'.format(self.V_max_18k_ss*0.3048))
-            self.ui.lineEdit_34.setText('{:.2f}'.format(self.Mach_18k_ss))
+            self.ui.lineEdit_29.setText('{:.2f}'.format(self.V_max_ts * 0.3048))
+            self.ui.lineEdit_35.setText('{:.2f}'.format(self.V_max_ss * 0.3048))
+            self.ui.lineEdit_34.setText('{:.2f}'.format(self.Mach_ss))
             self.ui.lineEdit.setText('{:.1f}'.format(self.altitude/1000))
         except Exception as err:
             print(err)
