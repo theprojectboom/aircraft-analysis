@@ -34,7 +34,20 @@ class PlotCanvas(FigureCanvas):
         y_min, y_max, y_step = 0, 600, 100
         self.ax = self.figure.add_subplot(111)
         self.ax.plot(x_sub*0.3048, y_sub*4.448222, 'blue', label='Thrust Required')
-        self.ax.plot(x_ts*0.3048, y_ts*4.448222, 'blue')
+
+        try:
+            x_fit = [x_ts[0]*0.3048, a*0.3048, x_ts[-1]*0.3048]
+            y_fit = [y_ts[0]*4.448222, b*4.448222, y_ts[-1]*4.448222]
+            eq = np.polyfit(x_fit, y_fit, 8)
+            f = np.poly1d(eq)
+            print(f)
+            x_new = np.linspace(x_fit[0], x_fit[-1], 10 ** 4)
+            y_new = f(x_new)
+            self.ax.plot(x_new, y_new, 'blue')
+        except Exception as error:
+            print(error)
+            self.ax.plot(x_ts * 0.3048, y_ts * 4.448222, 'blue')
+
         self.ax.plot(x_ss*0.3048, y_ss*4.448222, 'blue')
         self.ax.plot(a*0.3048, b*4.448222, 'black', marker='o', label='Mach 1.0')
         self.ax.plot(x*0.3048, z*4.448222, 'red', linestyle='--', label='Target Thrust')
@@ -170,6 +183,7 @@ class AircraftPerformance(QDialog):
         self.P_18k = 50633.374
         self.h_18k = 5486.4
 
+
     def assign_widgets(self):
         self.ui.pushButton_2.clicked.connect(exit_app)
         self.ui.pushButton.clicked.connect(self.data_retrieval)
@@ -246,7 +260,8 @@ class AircraftPerformance(QDialog):
 
     def aircraft_parameters(self):
         self.CD_0_sub = self.CD_0
-        self.CD_0_ts = self.CD_0*2.2
+        self.CD_0_ts_max = self.CD_0*2.2
+        self.CD_0_ts = self.get_cd_0_ts()
         self.CD_0_ss = self.CD_0*1.2
         self.AR_wing = self.b_wing**2/self.S_wing
         self.e_1 = 4.61*(1-0.045*self.AR_wing**0.68)*(np.cos(self.LE_sweep)**0.15)-3.1
@@ -258,7 +273,7 @@ class AircraftPerformance(QDialog):
         self.V_max_ss = np.sqrt(((self.T_target / self.W_max) * (self.W_max / self.S_wing) + (self.W_max / self.S_wing) * np.sqrt((
                 self.T_target/self.W_max) ** 2 - 4 * self.CD_0_ss * self.K)) / (self.rho*self.CD_0_ss))
         self.V_max_ts = np.sqrt(((self.T_target / self.W_max) * (self.W_max / self.S_wing) + (self.W_max / self.S_wing) * np.sqrt((
-                self.T_target/self.W_max) ** 2 - 4 * self.CD_0_ts * self.K)) / (self.rho*self.CD_0_ts))
+                self.T_target/self.W_max) ** 2 - 4 * self.CD_0_ts_max * self.K)) / (self.rho*self.CD_0_ts_max))
         self.Mach_ts = self.V_max_ts / self.a_18
         self.Mach_ss = self.V_max_ss / self.a_18
         self.thrust_required()
@@ -295,8 +310,9 @@ class AircraftPerformance(QDialog):
         self.T_TO_min = ((1.69*self.W_max**2)/(self.i.g_c*self.i.rho_SL_HD*self.dist_TO*self.S_wing*self.CL_max))/0.225
         self.F_TO_min = self.T_TO_min/self.eta_mechanical
         self.CL_a = self.W_max / (self.q_a*self.S_wing)
-        self.CD_a = self.CD_0_ts + self.K*self.CL_a**2
+        self.CD_a = self.CD_0_ts_max + self.K*self.CL_a**2
         self.T_req_a = self.q_a * self.S_wing * self.CD_a
+
 
         if self.Mach_ss < 1.0:
             self.V_max_ss = 0
@@ -349,6 +365,88 @@ class AircraftPerformance(QDialog):
         CD_plot = self.CD_0+self.K*CL**2
 
         self.m_2.plot_polar(CD_plot, CL)
+
+    #QUICK FIX - NOT ACCURATE
+    def get_cd_0_ts(self):
+        # try:
+        #     x = [850, 1071, 1175]
+        #     y = [self.CD_0_sub, self.CD_0_sub*2.2, self.CD_0_sub*1.2]
+        #     eq = np.polyfit(x, y, 3)
+        #     f = np.poly1d(eq)
+        #     print(f)
+        #     x_new = np.linspace(x[0], x[-1], 10**4)
+        #     y_new = f(x_new)
+        #     return y_new
+        # except Exception as error:
+        #     print(error)
+            #linear fix
+            first_half_ts = np.linspace(self.CD_0_sub, self.CD_0_sub*2.2, 6800)
+            second_half_ts = np.linspace(self.CD_0_sub*2.2, self.CD_0_sub*1.2, 3200)
+            cd_0_ts = np.concatenate([first_half_ts, second_half_ts])
+            return cd_0_ts
+
+    #                                       The following 3 functions use the Raymer equations
+    # def get_cd_0_sub(self, velocity):
+    #     wing_mean_chord = 0.4                   # get these as inputs?
+    #     af_max_thickness_loc = 0.5
+    #     af_max_thickness = 0.03
+    #     sweep_max_thick = 37
+    #     sweep_max_thick_rad = sweep_max_thick * (np.pi / 180)
+    #     wing_inter_factor = 1
+    #     wing_wetted_area = 0.6
+    #     wing_proj_area = 0.3
+    #
+    #     fuse_length = 1.778
+    #     fuse_max_cross_area = 0.04524
+    #     fineness_ratio = fuse_length/(np.sqrt((4/np.pi)*fuse_max_cross_area))
+    #     fuse_inter_factor = 1
+    #     fuse_wetted_area = 1.8
+    #
+    #     mach_num = velocity/324.6
+    #     leak_protuberance_drag_percent = 4
+    #
+    #     re_num_wing = (0.8194*velocity*wing_mean_chord)/(1.66*10**-5)
+    #     c_f_wing = 0.455/((np.log10(re_num_wing)**2.58)*(1+0.144*(mach_num**2))**0.65)
+    #     ff_wing = (1+((0.6/af_max_thickness_loc)*af_max_thickness)+100*(af_max_thickness**4))*((1.34*(mach_num**0.18))*(np.cos(sweep_max_thick_rad))**0.28)
+    #     cd_0_wing = (c_f_wing*ff_wing*wing_inter_factor*wing_wetted_area)/wing_proj_area
+    #
+    #     re_num_fus = (0.8194*velocity*fuse_length)/(1.66*10**-5)
+    #     c_f_fuse = 0.455/((np.log10(re_num_fus)**2.58)*(1+0.144*(mach_num**2))**0.65)
+    #     ff_fuse = 0.9+(5/(fineness_ratio**1.5))+(fineness_ratio/400)
+    #     cd_0_fuse = (c_f_fuse*ff_fuse*fuse_inter_factor*fuse_wetted_area)/wing_proj_area
+    #
+    #     cd_0_sub_sum = (cd_0_wing + cd_0_fuse)*((leak_protuberance_drag_percent/100)+1)
+    #     return cd_0_sub_sum
+    #
+    # def get_cd_0_ss(self, velocity):
+    #     wing_mean_chord = 0.4                       # get these as inputs?
+    #     lead_edge_sweep = 39
+    #     wing_wetted_area = 0.6
+    #     wing_proj_area = 0.3
+    #
+    #     fuse_length = 1.778
+    #     fuse_max_cross_area = 0.04524
+    #     d_div_q_wave = ((9*np.pi)/2)*(fuse_max_cross_area/fuse_length)**2
+    #     fuse_wetted_area = 1.8
+    #
+    #     e_wave_drag = 1.5
+    #     mach_num = velocity / 324.6
+    #     leak_protuberance_drag_percent = 4
+    #
+    #     re_num_wing = (0.8194 * velocity * wing_mean_chord) / (1.66 * 10 ** -5)
+    #     c_f_wing = 0.455 / ((np.log10(re_num_wing) ** 2.58) * (1 + 0.144 * (mach_num ** 2)) ** 0.65)
+    #     cd_0_wing = (c_f_wing*wing_wetted_area)/wing_proj_area
+    #
+    #     re_num_fus = (0.8194 * velocity * fuse_length) / (1.66 * 10 ** -5)
+    #     c_f_fuse = 0.455 / ((np.log10(re_num_fus) ** 2.58) * (1 + 0.144 * (mach_num ** 2)) ** 0.65)
+    #     cd_0_fuse = (c_f_fuse*fuse_wetted_area)/wing_proj_area
+    #
+    #     wave_drag_coeff = e_wave_drag*((1-(0.2*(mach_num-1.2)**0.57))*(1-((np.pi*lead_edge_sweep**0.77)/100)))*d_div_q_wave          #From Bryce's spreadsheet
+    #     cd_wave = wave_drag_coeff/wing_proj_area
+    #     ff_drag = (cd_0_wing + cd_0_fuse)*((leak_protuberance_drag_percent/100)+1)
+    #     cd_0_ss_sum = cd_wave+ff_drag
+    #     return cd_0_ss_sum
+
 
 
 def exit_app():
